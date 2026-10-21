@@ -15,3 +15,8 @@ jobs:
         with:
           node-version: '22.23.4'
       - run: nice -n 10 node tests/node-trust.test.cjs
+      - run: nice -n 10 npm ci --ignore-scripts
+      - run: nice -n 10 node node_modules/electron/install.js
+      - run: nice -n 10 node_modules/.bin/electron tests/node-trust.test.cjs
+        env:
+          ELECTRON_RUN_AS_NODE: '1'
