@@ -1,0 +1,16 @@
+const assert = require('node:assert/strict');
+const tls = require('node:tls');
+const { X509Certificate } = require('node:crypto');
+const { configureNodeTrust, filterTrustedCertificates } = require('../src/trust');
+const compromised = require('./impacted-intermediates.json');
+assert.equal(filterTrustedCertificates(compromised.map(item => item.pem)).length, 0);
+const before = tls.getCACertificates('default');
+const unaffected = before.filter(pem => new X509Certificate(pem).subject.includes('CN=emSign Root CA - G1'));
+assert.deepEqual(filterTrustedCertificates(unaffected), unaffected);
+configureNodeTrust();
+const after = tls.getCACertificates('default');
+assert.ok(after.length > 100, 'retain normal trust anchors');
+assert.ok(after.every(pem => new X509Certificate(pem).fingerprint256.replaceAll(':', '').toLowerCase() !== '86a1ecba089c4a8d3bbe2734c612ba341d813e043cf9e8a862cd5c57a36bbe6b'));
+const fingerprints = list => [...new Set(list.map(pem => new X509Certificate(pem).fingerprint256))].sort();
+assert.deepEqual(fingerprints(after), fingerprints(filterTrustedCertificates(before)));
+console.log('PASS: Node trust excludes compromised anchors and preserves unaffected roots');

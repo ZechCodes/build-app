@@ -1,3 +1,5 @@
+require('./trust').configureNodeTrust();
+
 const { app, BrowserWindow, shell, Menu, ipcMain } = require('electron');
 const path = require('path');
 const fs = require('fs');
